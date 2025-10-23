@@ -9,5 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
-      - run: brew audit --strict ./Formula/ha_apple_content_cache_client.rb
+      - name: Tap this repository locally so audit can use the formula name
+        run: brew tap "$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE"
+      - name: Audit formula (strict, online) by name
+        run: brew audit --strict --online "$GITHUB_REPOSITORY/ha_apple_content_cache_client"
       - run: brew install --build-from-source ./Formula/ha_apple_content_cache_client.rb

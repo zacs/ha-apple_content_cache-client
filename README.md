@@ -50,7 +50,7 @@ CACHE_NAME="Primary Apple Cache"
 
 | Entity ID Pattern | Example | Type | Units |
 |-------------------|----------|------|--------|
-| `sensor.<client>_apple_content_caching_used` | `sensor.macmini_seattle_apple_content_caching_used` | Numeric | MB |
+| `sensor.<client>_apple_content_caching_used` | `sensor.macos_server_apple_content_caching_used` | Numeric | MB |
 | `sensor.<client>_apple_content_caching_free` | ... | Numeric | MB |
 | `sensor.<client>_apple_content_caching_actual` | ... | Numeric | MB |
 | `sensor.<client>_apple_content_caching_icloud` | ... | Numeric | MB |
