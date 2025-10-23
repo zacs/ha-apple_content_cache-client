@@ -1,6 +1,28 @@
 #!/bin/bash
 set -euo pipefail
 
+# Show help if requested
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat << EOF
+ha_apple_content_cache_client.sh - Home Assistant Apple Content Caching client
+
+USAGE:
+  ha_apple_content_cache_client.sh [--help|-h]
+
+DESCRIPTION:
+  Pushes Apple Content Caching metrics from macOS to Home Assistant via REST API.
+  
+CONFIGURATION:
+  Set HA_URL, HA_TOKEN, and optionally CLIENT_ID and CACHE_NAME in:
+  ${ENV_PATH:-/usr/local/etc/ha-apple_content_cache-client/.env}
+
+EXAMPLES:
+  ha_apple_content_cache_client.sh         # Run once
+  brew services start ...                  # Run as service
+EOF
+  exit 0
+fi
+
 ENV_PATH="${ENV_PATH:-/usr/local/etc/ha-apple_content_cache-client/.env}"
 if [ -f "$ENV_PATH" ]; then
   export $(grep -v '^#' "$ENV_PATH" | xargs)

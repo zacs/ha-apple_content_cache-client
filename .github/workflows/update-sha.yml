@@ -15,6 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Download release tarball
@@ -25,10 +26,10 @@ jobs:
         id: sha
         run: echo "sha=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
 
-      - name: Update formula with new SHA
+      - name: Update formula with new version and SHA
         run: |
-          sed -i.bak "s/sha256 ".*"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
-          rm Formula/ha_apple_content_cache_client.rb.bak
+          sed -i "s|archive/refs/tags/v[^/]*/|archive/refs/tags/${{ github.event.release.tag_name }}/|" Formula/ha_apple_content_cache_client.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
 
       - name: Configure git user
         run: |
@@ -42,5 +43,6 @@ jobs:
           title: "chore: update formula SHA256 for ${{ github.event.release.tag_name }}"
           body: "Automated SHA256 update triggered by the `${{ github.event.release.tag_name }}` release."
           branch: "chore/update-formula-sha-${{ github.event.release.tag_name }}"
+          base: main
           labels: "automation, homebrew, sha256"
           signoff: false
