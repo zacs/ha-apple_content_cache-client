@@ -1,0 +1,14 @@
+name: Homebrew Formula Validation
+on:
+  push:
+    paths: ['Formula/**']
+  pull_request:
+    paths: ['Formula/**']
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@master
+      - run: brew audit --strict ./Formula/ha_apple_content_cache_client.rb
+      - run: brew install --build-from-source ./Formula/ha_apple_content_cache_client.rb

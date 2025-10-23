@@ -1,0 +1,21 @@
+name: Update Formula SHA256 on Release
+on:
+  release:
+    types: [published]
+jobs:
+  update-sha:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          curl -L "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz" -o release.tar.gz
+          echo "sha=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+      - id: sha
+        run: echo "sha=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+      - run: |
+          sed -i.bak "s/sha256 ".*"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
+          rm Formula/ha_apple_content_cache_client.rb.bak
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update formula SHA256 for ${{ github.event.release.tag_name }}"
+          branch: main
