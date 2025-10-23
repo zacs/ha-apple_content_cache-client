@@ -28,8 +28,19 @@ jobs:
 
       - name: Update formula with new version and SHA
         run: |
+          echo "Original formula:"
+          cat Formula/ha_apple_content_cache_client.rb
+          echo "Computed SHA: ${{ steps.sha.outputs.sha }}"
+          echo "Release tag: ${{ github.event.release.tag_name }}"
+          
+          # Update version URL
           sed -i "s|archive/refs/tags/v[^/]*/|archive/refs/tags/${{ github.event.release.tag_name }}/|" Formula/ha_apple_content_cache_client.rb
-          sed -i "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
+          
+          # Update SHA256
+          sed -i "s/sha256 \"[^\"]*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
+          
+          echo "Updated formula:"
+          cat Formula/ha_apple_content_cache_client.rb
 
       - name: Configure git user
         run: |
