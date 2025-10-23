@@ -1,9 +1,8 @@
 name: Homebrew Formula Validation
 on:
   push:
-    paths: ['Formula/**']
   pull_request:
-    paths: ['Formula/**']
+
 jobs:
   test:
     runs-on: macos-latest
