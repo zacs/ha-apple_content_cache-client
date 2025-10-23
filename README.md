@@ -72,4 +72,13 @@ tail -f /usr/local/var/log/ha-apple_content_cache-client.log
 
 ---
 
+## Development
+
+(Just a reminder to self:) To cut a new release:
+
+```
+git tag v0.1.1
+git push origin v0.1.1
+```
+
 MIT © [zacs](https://github.com/zacs)
