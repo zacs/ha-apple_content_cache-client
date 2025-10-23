@@ -1,23 +1,46 @@
 name: Update Formula SHA256 on Release
+
 on:
   release:
     types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-sha:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: |
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download release tarball
+        run: |
           curl -L "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz" -o release.tar.gz
-          echo "sha=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Compute SHA256
         id: sha
         run: echo "sha=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Update formula with new SHA
         run: |
-          sed -i.bak "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
+          sed -i.bak "s/sha256 ".*"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
           rm Formula/ha_apple_content_cache_client.rb.bak
-      - uses: stefanzweifel/git-auto-commit-action@v5
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit_message: "chore: update formula SHA256 for ${{ github.event.release.tag_name }}"
-          branch: main
+          commit-message: "chore: update formula SHA256 for ${{ github.event.release.tag_name }}"
+          title: "chore: update formula SHA256 for ${{ github.event.release.tag_name }}"
+          body: "Automated SHA256 update triggered by the `${{ github.event.release.tag_name }}` release."
+          branch: "chore/update-formula-sha-${{ github.event.release.tag_name }}"
+          labels: "automation, homebrew, sha256"
+          signoff: false
