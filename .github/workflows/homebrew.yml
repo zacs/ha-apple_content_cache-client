@@ -10,8 +10,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
       - name: Tap this repository locally so audit can use the formula name
-        run: brew tap "$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE"
+        run: brew tap zacs/ha-apple_content_cache-client "$GITHUB_WORKSPACE"
       - name: Audit formula (strict, online) by name
-        run: brew audit --strict --online "$GITHUB_REPOSITORY/ha_apple_content_cache_client"
+        run: brew audit --strict --online zacs/ha-apple_content_cache-client/ha_apple_content_cache_client
       - name: Install formula from tapped repository
         run: brew install --build-from-source ha_apple_content_cache_client
