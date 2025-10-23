@@ -2,7 +2,7 @@ class HaAppleContentCacheClient < Formula
   desc "Home Assistant Apple Content Caching client"
   homepage "https://github.com/zacs/ha-apple_content_cache-client"
   url "https://github.com/zacs/ha-apple_content_cache-client/archive/refs/tags/v0.1.2.tar.gz"
-  sha256 "6687767bcb195c56f91ca7ed5076f95f652be9d890bc102178c93f78e0b5559b"
+  sha256 "c04c3908511f70ed274232ec39ad5416fdf9ee33814924bc8420eec13b3dd8c3"
   license "MIT"
 
   depends_on "jq"
