@@ -34,7 +34,7 @@ jobs:
           echo "Release tag: ${{ github.event.release.tag_name }}"
           
           # Update version URL
-          sed -i "s|archive/refs/tags/v[^/]*/|archive/refs/tags/${{ github.event.release.tag_name }}/|" Formula/ha_apple_content_cache_client.rb
+          sed -i "s|/archive/refs/tags/v[^/]*.tar.gz|/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz|" Formula/ha_apple_content_cache_client.rb
           
           # Update SHA256
           sed -i "s/sha256 \"[^\"]*\"/sha256 \"${{ steps.sha.outputs.sha }}\"/" Formula/ha_apple_content_cache_client.rb
