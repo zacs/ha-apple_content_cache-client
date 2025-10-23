@@ -50,6 +50,15 @@ timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
 
 STATS_JSON=$(AssetCacheManagerUtil status -j 2>/dev/null || echo '{}')
 
+# Debug: Log the JSON output
+echo "[$(timestamp)] AssetCacheManagerUtil output: $STATS_JSON" >> "$LOG_FILE"
+
+# Check if we got valid JSON
+if ! echo "$STATS_JSON" | jq empty 2>/dev/null; then
+  echo "[$(timestamp)] ERROR: Invalid JSON from AssetCacheManagerUtil" >> "$LOG_FILE"
+  exit 1
+fi
+
 # Helper function to safely extract numeric values and convert to MB
 extract_mb() {
   local key="$1"
@@ -61,24 +70,14 @@ extract_mb() {
 ACTIVE=$(echo "$STATS_JSON" | jq -r '.result.Active // false')
 if [ "$ACTIVE" == "true" ]; then ACTIVE_STATE="on"; else ACTIVE_STATE="off"; fi
 
-declare -A METRICS=(
-  ["actual"]=".result.ActualCacheUsed"
-  ["free"]=".result.CacheFree"
-  ["used"]=".result.CacheUsed"
-  ["icloud"]=".result.CacheDetails.iCloud"
-  ["ios"]='.result.CacheDetails["iOS Software"]'
-  ["mac"]='.result.CacheDetails["Mac Software"]'
-  ["other"]=".result.CacheDetails.Other"
-  ["origin"]=".result.TotalBytesStoredFromOrigin"
-  ["clients"]=".result.TotalBytesReturnedToClients"
-  ["dropped"]=".result.TotalBytesDropped"
-)
-
-for key in "${!METRICS[@]}"; do
-  value=$(extract_mb "${METRICS[$key]}")
-  entity="sensor.${CLIENT_NAME}_apple_content_caching_${key}"
-  friendly="${CLIENT_NAME^} ${CACHE_NAME} (${key^})"
-  payload=$(cat <<EOF
+# Process each metric individually to avoid associative array issues
+process_metric() {
+  local key="$1"
+  local jq_path="$2"
+  local value=$(extract_mb "$jq_path")
+  local entity="sensor.${CLIENT_NAME}_apple_content_caching_${key}"
+  local friendly="${CLIENT_NAME^} ${CACHE_NAME} (${key^})"
+  local payload=$(cat <<EOF
 {
   "state": $value,
   "attributes": {
@@ -90,7 +89,19 @@ EOF
 )
   echo "[$(timestamp)] Updating $entity -> ${value}MB" >> "$LOG_FILE"
   curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$payload" "$HA_URL/api/states/$entity" >/dev/null 2>&1 || true
-done
+}
+
+# Process each metric
+process_metric "actual" ".result.ActualCacheUsed"
+process_metric "free" ".result.CacheFree"
+process_metric "used" ".result.CacheUsed"
+process_metric "icloud" ".result.CacheDetails.iCloud"
+process_metric "ios" '.result.CacheDetails["iOS Software"]'
+process_metric "mac" '.result.CacheDetails["Mac Software"]'
+process_metric "other" ".result.CacheDetails.Other"
+process_metric "origin" ".result.TotalBytesStoredFromOrigin"
+process_metric "clients" ".result.TotalBytesReturnedToClients"
+process_metric "dropped" ".result.TotalBytesDropped"
 
 # Active binary sensor
 binary_entity="binary_sensor.${CLIENT_NAME}_apple_content_caching_active"
