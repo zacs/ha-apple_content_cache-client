@@ -107,11 +107,12 @@ process_metric "dropped" ".result.TotalBytesDropped"
 
 # Active binary sensor
 binary_entity="binary_sensor.${CLIENT_NAME}_apple_content_caching_active"
+client_cap=$(echo "${CLIENT_NAME}" | sed 's/./\U&/')
 binary_payload=$(cat <<EOF
 {
   "state": "$ACTIVE_STATE",
   "attributes": {
-    "friendly_name": "${CLIENT_NAME^} ${CACHE_NAME} Active"
+    "friendly_name": "${client_cap} ${CACHE_NAME} Active"
   }
 }
 EOF
