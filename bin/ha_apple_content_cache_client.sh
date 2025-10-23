@@ -64,7 +64,7 @@ extract_mb() {
   local key="$1"
   local val
   val=$(echo "$STATS_JSON" | /usr/bin/jq -r "$key // 0" 2>/dev/null)
-  awk "BEGIN {printf "%.2f", $val / 1024 / 1024}"
+  awk "BEGIN {printf \"%.2f\", $val / 1024 / 1024}"
 }
 
 ACTIVE=$(echo "$STATS_JSON" | jq -r '.result.Active // false')
@@ -76,7 +76,9 @@ process_metric() {
   local jq_path="$2"
   local value=$(extract_mb "$jq_path")
   local entity="sensor.${CLIENT_NAME}_apple_content_caching_${key}"
-  local friendly="${CLIENT_NAME^} ${CACHE_NAME} (${key^})"
+  local client_cap=$(echo "${CLIENT_NAME}" | sed 's/./\U&/')
+  local key_cap=$(echo "${key}" | sed 's/./\U&/')
+  local friendly="${client_cap} ${CACHE_NAME} (${key_cap})"
   local payload=$(cat <<EOF
 {
   "state": $value,
