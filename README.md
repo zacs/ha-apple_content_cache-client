@@ -14,8 +14,8 @@ Each cache metric (used, free, iCloud, etc.) becomes its own dynamic sensor in H
 
 ```bash
 brew tap zacs/ha-apple_content_cache-client
-brew install ha-apple_content_cache_client
-brew services start zacs/ha-apple_content_cache-client/ha-apple_content_cache_client
+brew install ha_apple_content_cache_client
+brew services start zacs/ha-apple_content_cache-client/ha_apple_content_cache_client
 ```
 
 ---
