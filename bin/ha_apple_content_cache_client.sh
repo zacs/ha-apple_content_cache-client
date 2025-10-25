@@ -37,25 +37,28 @@ if [ -z "$HA_URL" ] || [ -z "$HA_TOKEN" ]; then
   exit 1
 fi
 
-# Debug: Log configuration (without exposing full token)
-token_preview=$(echo "$HA_TOKEN" | cut -c1-8)
-echo "[$(timestamp)] Config - URL: $HA_URL, Token: ${token_preview}..., Client: $CLIENT_NAME" >> "$LOG_FILE"
-
 if [ -n "${CLIENT_ID:-}" ]; then
   CLIENT_NAME="$CLIENT_ID"
 else
   CLIENT_NAME=$(hostname -s)
 fi
 
-LOG_FILE="/usr/local/var/log/ha-apple_content_cache-client.log"
+LOG_FILE="$HOME/Library/Logs/ha-apple_content_cache-client.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 
 timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
 
+# Debug: Log configuration (without exposing full token)
+token_preview=$(echo "$HA_TOKEN" | cut -c1-8)
+echo "[$(timestamp)] Config - URL: $HA_URL, Token: ${token_preview}..., Client: $CLIENT_NAME" >> "$LOG_FILE"
+
 STATS_JSON=$(AssetCacheManagerUtil status -j 2>/dev/null || echo '{}')
 
-# Debug: Log the JSON output
-echo "[$(timestamp)] AssetCacheManagerUtil output: $STATS_JSON" >> "$LOG_FILE"
+# Only log JSON output on errors or first run of the day
+current_date=$(date '+%Y-%m-%d')
+if [ ! -f "$LOG_FILE" ] || ! grep -q "$current_date" "$LOG_FILE" 2>/dev/null; then
+  echo "[$(timestamp)] Daily status check - AssetCacheManagerUtil working" >> "$LOG_FILE"
+fi
 
 # Check if we got valid JSON
 if ! echo "$STATS_JSON" | jq empty 2>/dev/null; then
@@ -93,9 +96,7 @@ process_metric() {
 }
 EOF
 )
-  echo "[$(timestamp)] Updating $entity -> ${value}MB" >> "$LOG_FILE"
-  
-  # Debug: Log the API call and response
+  # Send to Home Assistant and only log errors
   response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$payload" "$HA_URL/api/states/$entity" 2>&1)
   http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
   response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
@@ -129,9 +130,7 @@ binary_payload=$(cat <<EOF
 }
 EOF
 )
-echo "[$(timestamp)] Updating $binary_entity -> $ACTIVE_STATE" >> "$LOG_FILE"
-
-# Debug: Log the API call and response for binary sensor
+# Send binary sensor to Home Assistant and only log errors
 response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$binary_payload" "$HA_URL/api/states/$binary_entity" 2>&1)
 http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
 response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')

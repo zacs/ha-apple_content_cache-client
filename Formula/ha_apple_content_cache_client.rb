@@ -33,7 +33,7 @@ class HaAppleContentCacheClient < Formula
         brew services stop zacs/ha-apple_content_cache-client/ha-apple_content_cache_client
 
       Logs:
-        tail -f #{var}/log/ha-apple_content_cache-client.log
+        tail -f ~/Library/Logs/ha-apple_content_cache-client.log
     EOS
   end
 
