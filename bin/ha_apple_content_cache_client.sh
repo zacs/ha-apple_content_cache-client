@@ -37,6 +37,10 @@ if [ -z "$HA_URL" ] || [ -z "$HA_TOKEN" ]; then
   exit 1
 fi
 
+# Debug: Log configuration (without exposing full token)
+token_preview=$(echo "$HA_TOKEN" | cut -c1-8)
+echo "[$(timestamp)] Config - URL: $HA_URL, Token: ${token_preview}..., Client: $CLIENT_NAME" >> "$LOG_FILE"
+
 if [ -n "${CLIENT_ID:-}" ]; then
   CLIENT_NAME="$CLIENT_ID"
 else
@@ -90,7 +94,15 @@ process_metric() {
 EOF
 )
   echo "[$(timestamp)] Updating $entity -> ${value}MB" >> "$LOG_FILE"
-  curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$payload" "$HA_URL/api/states/$entity" >/dev/null 2>&1 || true
+  
+  # Debug: Log the API call and response
+  response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$payload" "$HA_URL/api/states/$entity" 2>&1)
+  http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+  response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
+  
+  if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+    echo "[$(timestamp)] ERROR: HTTP $http_code for $entity - Response: $response_body" >> "$LOG_FILE"
+  fi
 }
 
 # Process each metric
@@ -118,4 +130,12 @@ binary_payload=$(cat <<EOF
 EOF
 )
 echo "[$(timestamp)] Updating $binary_entity -> $ACTIVE_STATE" >> "$LOG_FILE"
-curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$binary_payload" "$HA_URL/api/states/$binary_entity" >/dev/null 2>&1 || true
+
+# Debug: Log the API call and response for binary sensor
+response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" -d "$binary_payload" "$HA_URL/api/states/$binary_entity" 2>&1)
+http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
+
+if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+  echo "[$(timestamp)] ERROR: HTTP $http_code for $binary_entity - Response: $response_body" >> "$LOG_FILE"
+fi
