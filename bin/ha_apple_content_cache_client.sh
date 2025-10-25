@@ -82,7 +82,8 @@ process_metric() {
   local key="$1"
   local jq_path="$2"
   local value=$(extract_mb "$jq_path")
-  local entity="sensor.${CLIENT_NAME}_apple_content_caching_${key}"
+  local safe_client_name=$(echo "$CLIENT_NAME" | tr '-' '_')
+  local entity="sensor.${safe_client_name}_apple_content_caching_${key}"
   local client_cap=$(echo "${CLIENT_NAME}" | sed 's/./\U&/')
   local key_cap=$(echo "${key}" | sed 's/./\U&/')
   local friendly="${client_cap} ${CACHE_NAME} (${key_cap})"
@@ -119,7 +120,8 @@ process_metric "clients" ".result.TotalBytesReturnedToClients"
 process_metric "dropped" ".result.TotalBytesDropped"
 
 # Active binary sensor
-binary_entity="binary_sensor.${CLIENT_NAME}_apple_content_caching_active"
+safe_client_name=$(echo "$CLIENT_NAME" | tr '-' '_')
+binary_entity="binary_sensor.${safe_client_name}_apple_content_caching_active"
 client_cap=$(echo "${CLIENT_NAME}" | sed 's/./\U&/')
 binary_payload=$(cat <<EOF
 {
